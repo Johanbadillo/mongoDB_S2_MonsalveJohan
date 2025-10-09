@@ -29,8 +29,11 @@ db.evento.aggregate([
         }
     },
     {
+        $unwind: "$municipioInfo"
+    },
+    {
         $match: {
-            "municipioInfo.nomMuni": { $regex: "^La", $options: "i" }
+            "municipioInfo.nomMuni": { $regex: /^puerto/i }
         }
     },
     {
@@ -151,7 +154,7 @@ db.evento.aggregate([
 
 // ¿Cuál es la cantidad promedio de incautaciones en los municipios cuyo nombre contiene "Valle"?
 
-
+// El lookup se consume muchisimo entonces es mejor dejarlo casi al final porque hace que se procese toda la data que trae
 db.evento.aggregate([
     {
         $lookup: {
@@ -283,3 +286,37 @@ db.evento.aggregate([
     }
 ]);
 
+
+db.evento.aggregate([
+    {
+        $group:{
+            _id: "$cod_muni",
+            promedio: {$avg: "$cantidad"}
+        }
+    },
+    {
+        $sort:{
+            promedio: -1
+        }
+    },
+    {
+        $limit: 10
+    },
+    {
+        $lookup: {
+            from: "municipios",
+            localField: "_id",
+            foreignField: "codMuni",
+            as: "municipioInfo"
+        }
+    },
+    {
+        $unwind: "$municipioInfo"
+    },
+    {
+        $project:{
+            nomMuni: "$municipioInfo.nomMuni",
+            promedio: 1
+        }
+    }
+]);

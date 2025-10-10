@@ -33,13 +33,13 @@ db.evento.aggregate([
     },
     {
         $match: {
-            "municipioInfo.nomMuni": { $regex: /^puerto/i }
+            "municipioInfo.nomMuni": { $regex: /^la/i }
         }
     },
     {
         $group: {
-            _id: "$municipioInfo.codMuni",
-            nomMuni: { $first: "$municipioInfo.nomMuni" },
+            _id: null,
+            totalMunicipios: { $sum: 1 },
             cantidadTotal: { $sum: "$cantidad" }
         }
     }
@@ -90,19 +90,17 @@ db.evento.aggregate([
         }
     },
     {
+        $unwind: "$municipioInfo"
+    },
+    {
         $match: {
             "municipioInfo.nomMuni": { $regex: "z", $options: "i" }
         }
     },
     {
-        $addFields: {
-            anio: { $year: '$fechaHecho' }
-        }
-    },
-    {
         $group: {
             _id: {
-                anio: "$anio",
+                anio: { $year: "$fechaHecho" },
                 codMuni: "$municipioInfo.codMuni"
             },
             nomMuni: { $first: "$municipioInfo.nomMuni" },
@@ -113,6 +111,37 @@ db.evento.aggregate([
         $sort: {
             "_id.anio": 1,
             cantidadTotal: -1
+        }
+    },
+    {
+        $group: {
+            _id: "$_id.anio",
+            municipios: {
+                $push: {
+                    nomMuni: "$nomMuni",
+                    cantidadTotal: "$cantidadTotal"
+                }
+            }
+        }
+    },
+    {
+        $project: {
+            anio: "$_id",
+            municipios: { $slice: ["$municipios", 3] }
+        }
+    },
+    {
+        $sort: { anio: 1 }
+    },
+    {
+        $unwind: "$municipios"
+    },
+    {
+        $project: {
+            _id: 0,
+            anio: 1,
+            nomMuni: "$municipios.nomMuni",
+            cantidadTotal: "$municipios.cantidadTotal"
         }
     }
 ]);
@@ -196,7 +225,90 @@ db.municipios.aggregate([
     }
 ]);
 
+// ¿Cuáles son los 10 municipios con mayor cantidad incautada en 2020?
 
+db.evento.aggregate([
+    {
+        $addFields: {
+            anio: { $year: '$fechaHecho' }
+        }
+    },
+    {
+        $group: {
+            _id: {
+                municipio: "$cod_muni",
+                anio: "$anio"
+            },
+            cantidadTotal: { $sum: "$cantidad" },
+            anio: { $first: "$anio" }
+        }
+    },
+    {
+        $match: {
+            anio: { $eq: 2020 }
+        }
+    },
+    {
+        $sort: { cantidadTotal: -1 }
+    },
+    {
+        $limit: 10
+    },
+    {
+        $project: {
+            _id: 0,
+            cantidadTotal: 1,
+            anio: 1
+        }
+    }
+]);
+
+// Por cada departamento, muestra el municipio con más cantidad incautada.
+
+db.evento.aggregate([
+    {
+        $lookup: {
+            from: 'municipios',
+            localField: "cod_muni",
+            foreignField: "codMuni",
+            as: 'muni'
+        }
+    }, {
+        $unwind: '$muni'
+    },
+    {
+        $lookup: {
+            from: 'departamentos',
+            localField: 'muni.codDepto',
+            foreignField: 'codDepto',
+            as: 'depto'
+        }
+    }, {
+        $unwind: '$depto'
+    }, {
+        $group: {
+            _id: { departamento: '$depto.nomDepto', municipio: "$muni.nomMuni" },
+            total: { $sum: '$cantidad' },
+        }
+    },
+    {
+        $sort: {
+            "_id.departamento": 1,
+            total: -1
+        }
+    },
+    {
+        $group: {
+            _id: "$_id.departamento",
+            municipios: {
+                $first: {
+                    nomMuni: "$_id.municipio",
+                    total: "$total"
+                }
+            }
+        }
+    }
+]);
 
 // ¿Cuáles son los 5 años con menor cantidad incautada en todo el país?
 
@@ -287,15 +399,16 @@ db.evento.aggregate([
 ]);
 
 
+/*
 db.evento.aggregate([
     {
-        $group:{
+        $group: {
             _id: "$cod_muni",
-            promedio: {$avg: "$cantidad"}
+            promedio: { $avg: "$cantidad" }
         }
     },
     {
-        $sort:{
+        $sort: {
             promedio: -1
         }
     },
@@ -314,9 +427,9 @@ db.evento.aggregate([
         $unwind: "$municipioInfo"
     },
     {
-        $project:{
+        $project: {
             nomMuni: "$municipioInfo.nomMuni",
             promedio: 1
         }
     }
-]);
+]);*/

@@ -57,6 +57,9 @@ db.evento.aggregate([
         }
     },
     {
+        $unwind: "$municipioInfo"
+    },
+    {
         $match: {
             "municipioInfo.nomMuni": { $regex: "al$", $options: "i" }
         }
@@ -94,7 +97,7 @@ db.evento.aggregate([
     },
     {
         $match: {
-            "municipioInfo.nomMuni": { $regex: "z", $options: "i" }
+            "municipioInfo.nomMuni": { $regex: /z/i }
         }
     },
     {

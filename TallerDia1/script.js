@@ -794,3 +794,14 @@ db.productos.aggregate([
     $limit: 5
   }
 ]);
+
+db.municipios.aggregate([
+  {
+    $match:{
+      "nomMuni": { $regex: /ito$/i }
+    }
+  },
+  {
+    $sort: { nomMuni: 1}
+  }
+]);

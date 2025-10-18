@@ -11,10 +11,10 @@ db.createCollection("grados");
 db.ubicacion.createIndex({ idUbica: 1 }, { unique: true });
 db.tipoEstable.createIndex({ idTipoEstable: 1 }, { unique: true });
 db.estable.createIndex({ idEstable: 1 }, { unique: true });
-db.correo.createIndex({idEstable: 1 }, { unique: true });
-db.telefono.createIndex({idEstable: 1 }, { unique: true });
-db.niveles.createIndex({idEstable: 1 }, { unique: true });
-db.grados.createIndex({idEstable: 1 }, { unique: true });
+db.correo.createIndex({ idEstable: 1 }, { unique: true });
+db.telefono.createIndex({ idEstable: 1 }, { unique: true });
+db.niveles.createIndex({ idEstable: 1 }, { unique: true });
+db.grados.createIndex({ idEstable: 1 }, { unique: true });
 
 db.dataBruto.aggregate([
     {
@@ -190,6 +190,40 @@ db.estable.aggregate([
             on: "idEstable",
             whenMatched: "merge",
             whenNotMatched: "insert"
+        }
+    }
+]);
+
+
+db.dataBruto.aggregate([
+    {
+        $project: {
+            _id: 1,
+            grados: { $split: ["$grados", ","] }
+        }
+    },
+    {
+        $unwind: "$grados"
+    },
+    {
+        $project: {
+            _id: "$_id",
+            grado: { $toInt: "$grados" }
+        }
+    },
+    {
+        $match: {
+            grado: { $gte: 0, $lte: 11 }
+        }
+    },
+    {
+        $group: {
+            _id: "$_id",
+            grados: {
+                $push: {
+                    grado: "$grado"
+                }
+            }
         }
     }
 ]);

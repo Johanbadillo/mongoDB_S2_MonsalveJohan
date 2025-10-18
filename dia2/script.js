@@ -805,3 +805,203 @@ db.municipios.aggregate([
     $sort: { nomMuni: 1}
   }
 ]);
+
+
+
+/*
+use  colegiosOficiales;
+
+db.correo.drop();
+db.correoPrueba.drop();
+db.correoPrueba.find();
+db.telefonoPrueba.find();
+db.telefono.find();
+
+db.dataBruto.aggregate([
+    {
+        $project: {
+            _id: 1,
+            grados: { $split: ["$grados", ","] }
+        }
+    },
+    {
+        $unwind: "$grados"
+    },
+    {
+        $project: {
+            _id: "$_id",
+            grado: { $toInt: "$grados" }
+        }
+    },
+    {
+        $sort: {grado: 1}
+    },
+    {
+        $match: {
+            grado: { $gte: 0, $lte: 11 }
+        }
+    },
+    {
+        $group: {
+            _id: "$_id",
+            grados: {
+                $push: {
+                    grado: "$grado"
+                }
+            }
+        }
+    }
+]);
+
+db.dataBruto.aggregate([
+    {
+        $project: {
+            _id: "$_id",
+            nomEstable: "$nombreestablecimiento",
+            nomRector: "$nombre_Rector",
+            numSedes: "$numero_de_Sedes"
+        }
+    }
+]);
+
+db.dataBruto.aggregate([
+    {
+        $project: {
+            _id: 1,
+            telefono: { $split: [ {$trim: { input: "$telefono", chars: " "}}, "--"] }
+        }
+    },
+    {
+        $merge: {
+            into: "telefonoPrueba",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+])
+
+db.telefonoPrueba.aggregate([
+    {
+        $unwind: "$telefono"
+    },
+    {
+        $project: {
+            _id: 1,
+            telefono: { $split: [ {$trim: { input: "$telefono", chars: " "}}, "/"] }
+        }
+    },
+    {
+        $unwind: "$telefono"
+    },
+    {
+        $group: {
+            _id: "$_id",
+            telefono: {
+                $push: {
+                    telefono: "$telefono"
+                }
+            }
+        }
+    },
+    {
+        $merge: {
+            into: "telefono",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+db.dataBruto.aggregate([
+    {
+        $project: {
+            _id: 1,
+            niveles: { $split: ["$niveles", ","] }
+        }
+    },
+    {
+        $unwind: "$niveles"
+    },
+    {
+        $project: {
+            _id: "$_id",
+            niveles:  "$niveles"
+        }
+    },
+    {
+        $group: {
+            _id: "$_id",
+            niveles: {
+                $push: {
+                    niveles: "$niveles"
+                }
+            }
+        }
+    },
+    {
+        $merge: {
+            into: "niveles",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+
+db.dataBruto.aggregate([
+    {
+        $project: {
+            _id: 1,
+            jornadas: { $split: ["$jornadas", ","] }
+        }
+    },
+    {
+        $unwind: "$jornadas"
+    },
+    {
+        $project: {
+            _id: "$_id",
+            jornadas:  "$jornadas"
+        }
+    },
+    {
+        $group: {
+            _id: "$_id",
+            jornadas: {
+                $push: {
+                    jornadas: "$jornadas"
+                }
+            }
+        }
+    },
+    {
+        $merge: {
+            into: "jornadas",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+db.dataBruto.aggregate([
+    {
+        $project: {
+            _id: 1,
+            correo: { $split: [ {$trim: { input: "$correo_Electronico", chars: " "}}, "--"] }
+        }
+    },
+    {
+        $merge: {
+            into: "correoPrueba",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+*/

@@ -355,6 +355,11 @@ db.dataBruto.aggregate([
     }
 ]);
 
+
+
+//---------------------------------------------------------------
+// Tipo Establecimiento
+
 db.dataBruto.aggregate([
     {
         $project: {
@@ -374,3 +379,187 @@ db.dataBruto.aggregate([
 
 
 
+db.estable.aggregate([
+    {
+        $lookup: {
+            from: "correo",
+            localField: "_id",
+            foreignField: "_id",
+            as: "correo"
+        }
+    },
+    {
+        $unwind: "$correo"
+    },
+    {
+        $project: {
+            _id: 1,
+            nomEstable: 1,
+            nomRector: 1,
+            numSedes: 1,
+            correos: "$correo.correo"
+        }
+    },
+    {
+        $merge: {
+            into: "estable",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+db.estable.aggregate([
+    {
+        $lookup: {
+            from: "telefono",
+            localField: "_id",
+            foreignField: "_id",
+            as: "telefono"
+        }
+    },
+    {
+        $unwind: "$telefono"
+    },
+    {
+        $project: {
+            _id: 1,
+            nomEstable: 1,
+            nomRector: 1,
+            numSedes: 1,
+            telefonos: "$telefono.telefono"
+        }
+    },
+    {
+        $merge: {
+            into: "estable",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+db.estable.aggregate([
+    {
+        $lookup: {
+            from: "grados",
+            localField: "_id",
+            foreignField: "_id",
+            as: "grados"
+        }
+    },
+    {
+        $unwind: "$grados"
+    },
+    {
+        $project: {
+            _id: 1,
+            nomEstable: 1,
+            nomRector: 1,
+            numSedes: 1,
+            grados: "$grados.grados"
+        }
+    },
+    {
+        $merge: {
+            into: "estable",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+
+db.estable.aggregate([
+    {
+        $lookup: {
+            from: "niveles",
+            localField: "_id",
+            foreignField: "_id",
+            as: "niveles"
+        }
+    },
+    {
+        $unwind: "$niveles"
+    },
+    {
+        $project: {
+            _id: 1,
+            nomEstable: 1,
+            nomRector: 1,
+            numSedes: 1,
+            niveles: "$niveles.niveles"
+        }
+    },
+    {
+        $merge: {
+            into: "estable",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+db.estable1.aggregate([
+    {
+        $lookup: {
+            from: "correo",
+            localField: "_id",
+            foreignField: "_id",
+            as: "correo"
+        }
+    },
+    {
+        $unwind: "$correo"
+    },
+    {
+        $lookup: {
+            from: "telefono",
+            localField: "_id",
+            foreignField: "_id",
+            as: "telefono"
+        }
+    },
+    {
+        $unwind: "$telefono"
+    },
+    {
+        $lookup: {
+            from: "niveles",
+            localField: "_id",
+            foreignField: "_id",
+            as: "niveles"
+        }
+    },
+    {
+        $unwind: "$niveles"
+    },
+    {
+        $lookup: {
+            from: "grados",
+            localField: "_id",
+            foreignField: "_id",
+            as: "grados"
+        }
+    },
+    {
+        $unwind: "$grados"
+    },
+    {
+        $project: {
+            _id: 1,
+            nomEstable: 1,
+            nomRector: 1,
+            numSedes: 1,
+            niveles: "$niveles.niveles",
+            correos: "$correo.correo",
+            telefonos: "$telefono.telefono",
+            grados: "$grados.grado",
+        }
+    }
+     
+]);

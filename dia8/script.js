@@ -1,199 +1,213 @@
-use colegiosOficiales;
+use  colegiosOficiales;
 
-db.createCollection("ubicacion");
-db.createCollection("tipoEstable");
-db.createCollection("estable");
-db.createCollection("correo");
 db.createCollection("telefono");
 db.createCollection("niveles");
+db.createCollection("jornadas");
+db.createCollection("especialidades");
 db.createCollection("grados");
+db.createCollection("correo");
 
-db.ubicacion.createIndex({ idUbica: 1 }, { unique: true });
-db.tipoEstable.createIndex({ idTipoEstable: 1 }, { unique: true });
-db.estable.createIndex({ idEstable: 1 }, { unique: true });
-db.correo.createIndex({ idEstable: 1 }, { unique: true });
-db.telefono.createIndex({ idEstable: 1 }, { unique: true });
-db.niveles.createIndex({ idEstable: 1 }, { unique: true });
-db.grados.createIndex({ idEstable: 1 }, { unique: true });
+db.createCollection("Estable");
+db.createCollection("ubi");
+db.createCollection("tipoEstable");
 
+db.telefono.drop();
+db.niveles.drop();
+db.jornadas.drop();
+db.especialidades.drop();
+db.grados.drop();
+db.correo.drop();
+
+db.tipoEstable.drop();
+db.estable.drop();
+db.ubi.drop();
+
+
+
+// TELEFONO
 db.dataBruto.aggregate([
     {
         $project: {
-            _id: 0,
-            zona: 1,
-            direccion: 1,
-            idUbica: "$_id"
+            _id: 1,
+            telefono: { $split: [ {$trim: { input: "$telefono", chars: " "}}, "--"] }
         }
     },
     {
         $merge: {
-            into: "ubicacion",
-            on: "idUbica",
+            into: "telefonoPrueba",
+            on: "_id",
             whenMatched: "merge",
             whenNotMatched: "insert"
         }
     }
 ]);
 
-db.dataBruto.aggregate([
+db.telefonoPrueba.aggregate([
     {
-        $project: {
-            _id: 0,
-            tipo_Establecimiento: 1,
-            especialidad: 1,
-            jornadas: 1,
-            idTipoEstable: "$_id"
-        }
-    },
-    {
-        $merge: {
-            into: "tipoEstable",
-            on: "idTipoEstable",
-            whenMatched: "merge",
-            whenNotMatched: "insert"
-        }
-    }
-]);
-
-db.dataBruto.aggregate([
-    {
-        $project: {
-            _id: 0,
-            nomEstable: "$nombreestablecimiento",
-            numSedes: "$numero_de_Sedes",
-            nomRector: "$nombre_Rector",
-            idEstable: "$_id"
-        }
-    },
-    {
-        $merge: {
-            into: "estable",
-            on: "idEstable",
-            whenMatched: "merge",
-            whenNotMatched: "insert"
-        }
-    }
-]);
-
-
-
-// si se intenta hacer de manera contraria genera muchos errores(no se porque es) en los cuales que salen que las llaves son duplicadas o no deja hacer cambios
-db.estable.aggregate([
-    {
-        $lookup: {
-            from: "dataBruto",
-            localField: "nomEstable",
-            foreignField: "nombreestablecimiento",
-            as: "infoCorreo"
-        }
-    },
-    {
-        $unwind: "$infoCorreo"
+        $unwind: "$telefono"
     },
     {
         $project: {
-            _id: "$idEstable",
-            correo: "$infoCorreo.correo_Electronico",
-            idEstable: "$_id"
+            _id: 1,
+            telefono: { $split: [ {$trim: { input: "$telefono", chars: " "}}, "/"] }
         }
     },
     {
-        $merge: {
-            into: "correo",
-            on: "idEstable",
-            whenMatched: "merge",
-            whenNotMatched: "insert"
-        }
-    }
-]);
-
-db.estable.aggregate([
-    {
-        $lookup: {
-            from: "dataBruto",
-            localField: "nomEstable",
-            foreignField: "nombreestablecimiento",
-            as: "infoTelefono"
-        }
+        $unwind: "$telefono"
     },
     {
-        $unwind: "$infoTelefono"
-    },
-    {
-        $project: {
-            _id: "$idEstable",
-            correo: "$infoTelefono.telefono",
-            idEstable: "$_id"
+        $group: {
+            _id: "$_id",
+            telefono: {
+                $push: {
+                    telefono: "$telefono"
+                }
+            }
         }
     },
     {
         $merge: {
             into: "telefono",
-            on: "idEstable",
+            on: "_id",
             whenMatched: "merge",
             whenNotMatched: "insert"
         }
     }
 ]);
 
-db.estable.aggregate([
+// eliminar luego de su uso ya que no tiene algun uso extra
+db.telefonoPrueba.drop();
+db.telefono.drop();
+
+//---------------------------------------------------------------
+// Niveles
+
+db.dataBruto.aggregate([
     {
-        $lookup: {
-            from: "dataBruto",
-            localField: "nomEstable",
-            foreignField: "nombreestablecimiento",
-            as: "infoNiveles"
+        $project: {
+            _id: 1,
+            niveles: { $split: ["$niveles", ","] }
         }
     },
     {
-        $unwind: "$infoNiveles"
+        $unwind: "$niveles"
     },
     {
         $project: {
-            _id: "$idEstable",
-            correo: "$infoNiveles.niveles",
-            idEstable: "$_id"
+            _id: "$_id",
+            niveles:  "$niveles"
+        }
+    },
+    {
+        $group: {
+            _id: "$_id",
+            niveles: {
+                $push: {
+                    niveles: "$niveles"
+                }
+            }
         }
     },
     {
         $merge: {
             into: "niveles",
-            on: "idEstable",
+            on: "_id",
             whenMatched: "merge",
             whenNotMatched: "insert"
         }
     }
 ]);
 
-db.estable.aggregate([
+
+// eliminar luego de su uso ya que no tiene algun uso extra
+db.niveles.drop();
+
+//---------------------------------------------------------------
+// Jornadas
+
+db.dataBruto.aggregate([
     {
-        $lookup: {
-            from: "dataBruto",
-            localField: "nomEstable",
-            foreignField: "nombreestablecimiento",
-            as: "infogrados"
+        $project: {
+            _id: 1,
+            jornadas: { $split: ["$jornadas", ","] }
         }
     },
     {
-        $unwind: "$infogrados"
+        $unwind: "$jornadas"
     },
     {
         $project: {
-            _id: "$idEstable",
-            correo: "$infogrados.niveles",
-            idEstable: "$_id"
+            _id: "$_id",
+            jornadas:  "$jornadas"
+        }
+    },
+    {
+        $group: {
+            _id: "$_id",
+            jornadas: {
+                $push: {
+                    jornadas: "$jornadas"
+                }
+            }
         }
     },
     {
         $merge: {
-            into: "niveles",
-            on: "idEstable",
+            into: "jornadas",
+            on: "_id",
             whenMatched: "merge",
             whenNotMatched: "insert"
         }
     }
 ]);
 
+// eliminar luego de su uso ya que no tiene algun uso extra
+db.jornadas.drop();
+
+//---------------------------------------------------------------
+// Especialidad
+
+db.dataBruto.aggregate([
+    {
+        $project: {
+            _id: 1,
+            especialidad: { $split: ["$especialidad", ","] }
+        }
+    },
+    {
+        $unwind: "$especialidad"
+    },
+    {
+        $project: {
+            _id: "$_id",
+            especialidad:  "$especialidad"
+        }
+    },
+    {
+        $group: {
+            _id: "$_id",
+            especialidades: {
+                $push: {
+                    especialidad: "$especialidad"
+                }
+            }
+        }
+    },
+    {
+        $merge: {
+            into: "especialidades",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+// eliminar luego de su uso ya que no tiene algun uso extra
+db.especialidades.drop();
+
+//---------------------------------------------------------------
+// Grados
 
 db.dataBruto.aggregate([
     {
@@ -212,6 +226,9 @@ db.dataBruto.aggregate([
         }
     },
     {
+        $sort: {grado: 1}
+    },
+    {
         $match: {
             grado: { $gte: 0, $lte: 11 }
         }
@@ -225,5 +242,135 @@ db.dataBruto.aggregate([
                 }
             }
         }
+    },
+    {
+        $merge: {
+            into: "grados",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
     }
 ]);
+
+// eliminar luego de su uso ya que no tiene algun uso extra
+db.grados.drop();
+
+//---------------------------------------------------------------
+// Correo
+
+db.dataBruto.aggregate([
+    {
+        $project: {
+            _id: 1,
+            correo: { $split: [ {$trim: { input: "$correo_Electronico", chars: " "}}, "--"] }
+        }
+    },
+    {
+        $merge: {
+            into: "correoPrueba",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+db.correoPrueba.aggregate([
+    {
+        $unwind: "$correo"
+    },
+    {
+        $project: {
+            _id: 1,
+            correo: { $split: [ {$trim: { input: "$correo", chars: " "}}, "-"] }
+        }
+    },
+    {
+        $unwind: "$correo"
+    },
+    {
+        $group: {
+            _id: "$_id",
+            correo: {
+                $push: {
+                    correo: "$correo"
+                }
+            }
+        }
+    },
+    {
+        $merge: {
+            into: "correo",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+db.correo.drop();
+
+//---------------------------------------------------------------
+// Estable
+
+db.dataBruto.aggregate([
+    {
+        $project: {
+            _id: "$_id",
+            nomEstable: "$nombreestablecimiento",
+            nomRector: "$nombre_Rector",
+            numSedes: "$numero_de_Sedes"
+        }
+    },
+    {
+        $merge: {
+            into: "estable",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+//---------------------------------------------------------------
+// ubicacion
+
+
+db.dataBruto.aggregate([
+    {
+        $project: {
+            _id: "$_id",
+            dirrecion: "$direccion",
+            zona: "$zona"
+        }
+    },
+    {
+        $merge: {
+            into: "ubi",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+db.dataBruto.aggregate([
+    {
+        $project: {
+            _id: 1,
+            tipoEstable: "$tipo_Establecimiento"
+        }
+    },
+    {
+        $merge: {
+            into: "tipoEstable",
+            on: "_id",
+            whenMatched: "merge",
+            whenNotMatched: "insert"
+        }
+    }
+]);
+
+
+
